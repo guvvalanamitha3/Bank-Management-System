@@ -1,0 +1,992 @@
+
+	package com.bank;
+
+	import java.util.Scanner;
+	import com.bank.model.BankCustomerDetails;
+	import com.bank.service.BankService;
+	import com.bank.service.BankServiceImpl;
+	import com.bank.service.CustomerRelationAssociater;
+
+
+	public class App 
+	{
+	    public static void main( String[] args )
+	    {
+	    	BankServiceImpl bd1=new BankServiceImpl();
+	    	Scanner sc=new Scanner(System.in);
+	    	
+	    	
+	        BankService bankservice= CustomerRelationAssociater.customerService();
+	        bankservice.toSleep("🙏🙏😍WELCOME TO TECA62 BANK😍🙏🙏\n");
+	        while(true) {
+	        bankservice.toSleep("Enter \n 1.For Registration \n 2.For Login\n");
+	        display(bankservice,sc);
+	        System.out.println("Do you want to continue(yes/no)\n");
+	        String str=sc.next();
+	        if(str.equalsIgnoreCase("no")) {
+	        	System.out.println("Thank you visit again");	
+	        	break;
+	        }
+	        if(!str.equalsIgnoreCase("yes")) {
+	        	System.out.println("invalid input");
+	        	break;
+	        }
+	        }
+	    }
+	    private static void display(BankService bankService,Scanner sc) {
+	        int choice = sc.nextInt();
+	        
+	        switch (choice) {
+	            case 1:
+	                bankService.toSleep("_*Registration*_\n");
+	                bankService.userRegistration();
+	                break;
+	            case 2:
+	                bankService.toSleep("--*Login--*\n");
+	                bankService.userLogin();
+	                break;
+	            default:
+	                bankService.toSleep("Invalid Selection\n");
+	                break;
+	        }
+	    }
+    }
+
+
+package com.bank.DAO;
+
+import java.util.List;
+import com.bank.model.BankCustomerDetails;
+	public interface BankDAO {
+		public List<BankCustomerDetails> getAllBankCustomerDetails();
+		int insertBankCustomerDetails(BankCustomerDetails bankcustomedetails);
+		BankCustomerDetails getuserdetailsemailidandpassword(String emailidOrMobilenumber, String password);
+		int updateAmountByUsingAccountNumber(double amount,long accountnumber);
+	}
+
+
+
+package com.bank.DAO;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.bank.model.BankCustomerDetails;
+
+public class BankDAOImpl implements BankDAO{
+	private Connection connection;
+	private static final String url="jdbc:mysql://localhost:3307/teca62projects?user=root&password=root";
+	private static final String select="select * from bank_customer_details";
+	private static final String insert="insert into bank_customer_details(First_Name, Last_Name, Email_Id, Password, Mobile_Number, Aadhar_Number, Gender, Address, Date_Of_Birth, Account_Number, Amount)values(?,?,?,?,?,?,?,?,?,?,?)";
+	@Override
+	public List<BankCustomerDetails> getAllBankCustomerDetails() {
+		try {
+	         connection=DriverManager.getConnection(url);
+		 PreparedStatement ps=connection.prepareStatement(select);
+		 ResultSet resultset=ps.executeQuery();
+		 List<BankCustomerDetails> listbankcustomerdetails=new ArrayList<BankCustomerDetails>();
+		 if(resultset.isBeforeFirst()) 
+		 {
+			 while(resultset.next()) 
+			 {
+				 BankCustomerDetails bankcustomerdetails=new BankCustomerDetails();
+				 bankcustomerdetails.setAadharnumber(resultset.getLong("Aadhar_Number"));
+				 bankcustomerdetails.setEmailid(resultset.getString("Email_Id"));
+				 bankcustomerdetails.setPassword(resultset.getString("Password"));
+				 bankcustomerdetails.setMobilenumber(resultset.getLong("Mobile_Number"));
+				 listbankcustomerdetails.add(bankcustomerdetails); 
+			 }
+			 return listbankcustomerdetails;
+		 }
+		 else {
+			 return null;
+		 }
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+	}
+//	First_Name, Last_Name, Email_Id, Password, Mobile_Number, Aadhar_Number, Gender, Address, Date_Of_Birth, Account_Number, Amount
+	@Override
+	public int insertBankCustomerDetails(BankCustomerDetails bankcustomedetails) {
+		try {
+			Connection connection=DriverManager.getConnection("jdbc:mysql://localhost:3307/teca62projects?user=root&password=root");
+			PreparedStatement preparedstatement=connection.prepareStatement(insert);
+			preparedstatement.setString(1,bankcustomedetails.getFirstname());
+			preparedstatement.setString(2,bankcustomedetails.getLastname());
+			preparedstatement.setString(3,bankcustomedetails.getEmailid());
+			preparedstatement.setString(4,bankcustomedetails.getPassword());
+			preparedstatement.setLong(5,bankcustomedetails.getMobilenumber());
+			preparedstatement.setLong(6,bankcustomedetails.getAadharnumber());
+			preparedstatement.setString(7,bankcustomedetails.getGender());
+			preparedstatement.setString(8,bankcustomedetails.getAddress());
+			LocalDate dateofbirth=bankcustomedetails.getDateofbirth();
+			preparedstatement.setDate(9,Date.valueOf(dateofbirth));
+			preparedstatement.setLong(10,bankcustomedetails.getAccountnumber());	
+			preparedstatement.setDouble(11,bankcustomedetails.getAmount());
+			return preparedstatement.executeUpdate();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	//First_Name, Last_Name, Email_Id, Password, Mobile_Number, Aadhar_Number, Gender, Address, Date_Of_Birth, Account_Number, Amount
+	@Override
+	public BankCustomerDetails getuserdetailsemailidandpassword(String emailidOrMobilenumber, String password) {
+		String login="select * from bank_customer_details where (Email_Id=? or Mobile_Number=?) and Password=?";
+		try {
+			Connection connection=DriverManager.getConnection(url);
+			BankCustomerDetails bd=new BankCustomerDetails();
+			PreparedStatement preparedstatement=connection.prepareStatement(login);
+			preparedstatement.setString(1,emailidOrMobilenumber);
+			preparedstatement.setString(2, emailidOrMobilenumber);
+			preparedstatement.setString(3,password);
+			ResultSet resultset=preparedstatement.executeQuery();
+			if(resultset.next()) {
+					 BankCustomerDetails bankcustomerdetails=new BankCustomerDetails();
+					 bankcustomerdetails.setGender(resultset.getString("Gender"));
+					 bankcustomerdetails.setFirstname(resultset.getString("First_Name"));
+					 bankcustomerdetails.setLastname(resultset.getString("Last_Name"));
+					 bankcustomerdetails.setAmount(resultset.getDouble("Amount"));
+					 bankcustomerdetails.setAccountnumber(resultset.getLong("Account_Number"));
+					 return bankcustomerdetails;
+			}
+			else {
+				return null;
+			}
+				
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+			return null;
+		}
+		
+	}
+	@Override
+	public int updateAmountByUsingAccountNumber(double amount,long accountnumber) {
+		String update="update bank_customer_details set Amount=? where Account_Number=?";
+		try {
+			connection=DriverManager.getConnection(url);
+			PreparedStatement preparedStatement=connection.prepareStatement(update);
+			preparedStatement.setDouble(1, amount);
+			preparedStatement.setLong(2,accountnumber);
+			return preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return 0;
+		}
+		
+	}
+
+}
+
+
+
+package com.bank.DAO;
+
+import java.util.List;
+
+import com.bank.model.BankStatementDetails;
+
+public interface BankStatementDAO {
+	int insertBankStatement(BankStatementDetails bankstatementdetails);
+    List<BankStatementDetails> bankstatement(long accountnumber);
+}
+
+
+
+
+package com.bank.DAO;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.bank.model.BankCustomerDetails;
+import com.bank.model.BankStatementDetails;
+import com.bank.service.BankServiceImpl;
+
+public class BankStatementDAOImpl implements BankStatementDAO{
+	private Connection connection;
+	private static final String url="jdbc:mysql://localhost:3307/teca62projects?user=root&password=root";
+	//BankServiceImpl bsi=new BankServiceImpl();
+	@Override
+	public int insertBankStatement(BankStatementDetails bankstatementdetails) {
+		String insert="insert into bank_statement(Date_Of_Transaction, Time_Of_Transaction, Transaction_Amount, Balance_Amount, Account_Number) values(?,?,?,?,?)";
+		try {
+			connection=DriverManager.getConnection(url);
+			PreparedStatement preparedStatement=connection.prepareStatement(insert);
+			preparedStatement.setDate(1, Date.valueOf(LocalDate.now()));
+			preparedStatement.setTime(2, Time.valueOf(LocalTime.now()));
+			preparedStatement.setDouble(3, bankstatementdetails.getTransactionamount());
+			preparedStatement.setDouble(4, bankstatementdetails.getBalanceamount());
+			preparedStatement.setLong(5, bankstatementdetails.getAccountnumber());
+			return preparedStatement.executeUpdate();
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	@Override
+	public List<BankStatementDetails> bankstatement(long accountnumber) {
+		String select="select * from bank_statement where Account_Number=?";
+		try {
+			connection=DriverManager.getConnection(url);
+			PreparedStatement preparedstatement=connection.prepareStatement(select);
+			preparedstatement.setLong(1, accountnumber);
+			ResultSet result=preparedstatement.executeQuery();
+			List<BankStatementDetails> details = new ArrayList<BankStatementDetails>();
+			if(result.isBeforeFirst())
+			{
+				while(result.next())
+				{
+				BankStatementDetails bankstatement=new BankStatementDetails();
+				bankstatement.setBalanceamount(result.getDouble("Balance_Amount"));
+				bankstatement.setTimeoftransaction(result.getTime("Time_Of_Transaction").toLocalTime());
+				bankstatement.setDateoftransaction(result.getDate("Date_Of_Transaction").toLocalDate());
+				bankstatement.setTransactionamount(result.getDouble("Transaction_Amount"));
+				details.add(bankstatement);
+				}
+				return details;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}
+
+
+
+
+package com.bank.model;
+
+import java.time.LocalDate;
+
+public class BankCustomerDetails {
+	private int id;
+	private String firstname;
+	private String lastname;
+	private String emailid;
+	private String password;
+	private long mobilenumber;
+	private long aadharnumber;
+	private String gender;
+	private String address;
+	private double amount;
+	private long accountnumber;
+	private LocalDate dateofbirth;
+	
+	public BankCustomerDetails() {
+		
+	}
+	public BankCustomerDetails(int id, String firstname, String lastname, String emailid, String password,
+			long mobilenumber, long aadharnumber, String gender, String address, LocalDate dateofbirth,long accountnumber,double amount) {
+		super();
+		this.id = id;
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.emailid = emailid;
+		this.password = password;
+		this.mobilenumber = mobilenumber;
+		this.aadharnumber = aadharnumber;
+		this.gender = gender;
+		this.address = address;
+		this.dateofbirth = dateofbirth;
+		this.accountnumber = accountnumber;
+		this.amount = amount;
+	}
+	
+	
+	@Override
+	public String toString() {
+		return "BankCustomerDetails [id=" + id + ", firstname=" + firstname + ", lastname=" + lastname + ", emailid="
+				+ emailid + ", password=" + password + ", mobilenumber=" + mobilenumber + ", aadharnumber="
+				+ aadharnumber + ", gender=" + gender + ", address=" + address + ", amount=" + amount
+				+ ", accountnumber=" + accountnumber + ", dateofbirth=" + dateofbirth + "]";
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public  String getFirstname() {
+		return firstname;
+	}
+	public void setFirstname(String firstname) {
+		this.firstname = firstname;
+	}
+	public String getLastname() {
+		return lastname;
+	}
+	public void setLastname(String lastname) {
+		this.lastname = lastname;
+	}
+	public String getEmailid() {
+		return emailid;
+	}
+	public void setEmailid(String emailid) {
+		this.emailid = emailid;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	public long getMobilenumber() {
+		return mobilenumber;
+	}
+	public void setMobilenumber(long mobilenumber) {
+		this.mobilenumber = mobilenumber;
+	}
+	public long getAadharnumber() {
+		return aadharnumber;
+	}
+	public void setAadharnumber(long aadharnumber) {
+		this.aadharnumber = aadharnumber;
+	}
+	public String getGender() {
+		return gender;
+	}
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
+	public double getAmount() {
+		return amount;
+	}
+	public void setAmount(double amount) {
+		this.amount = amount;
+	}
+	public long getAccountnumber() {
+		return accountnumber;
+	}
+	public void setAccountnumber(long accountnumber) {
+		this.accountnumber = accountnumber;
+	}
+	public LocalDate getDateofbirth() {
+		return dateofbirth;
+	}
+	public void setDateofbirth(LocalDate dateofbirth) {
+		this.dateofbirth = dateofbirth;
+	}
+}
+
+
+
+
+package com.bank.model;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+public class BankStatementDetails {
+	private int id;
+	private LocalDate dateoftransaction;
+	private LocalTime timeoftransaction;
+	private double transactionamount;
+	private double balanceamount;
+	private long accountnumber;
+	public BankStatementDetails()
+	{
+		
+	}
+	public BankStatementDetails(int id, LocalDate dateoftransaction, LocalTime timeoftransaction,
+			double transactionamount, double balanceamount, long accountnumber) {
+		super();
+		this.id = id;
+		this.dateoftransaction = dateoftransaction;
+		this.timeoftransaction = timeoftransaction;
+		this.transactionamount = transactionamount;
+		this.balanceamount = balanceamount;
+		this.accountnumber = accountnumber;
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public LocalDate getDateoftransaction() {
+		return dateoftransaction;
+	}
+	public void setDateoftransaction(LocalDate dateoftransaction) {
+		this.dateoftransaction = dateoftransaction;
+	}
+	public LocalTime getTimeoftransaction() {
+		return timeoftransaction;
+	}
+	public void setTimeoftransaction(LocalTime timeoftransaction) {
+		this.timeoftransaction = timeoftransaction;
+	}
+	public double getTransactionamount() {
+		return transactionamount;
+	}
+	public void setTransactionamount(double transactionamount) {
+		this.transactionamount = transactionamount;
+	}
+	public double getBalanceamount() {
+		return balanceamount;
+	}
+	public void setBalanceamount(double balanceamount) {
+		this.balanceamount = balanceamount;
+	}
+	public long getAccountnumber() {
+		return accountnumber;
+	}
+	public void setAccountnumber(long accountnumber) {
+		this.accountnumber = accountnumber;
+	}
+	@Override
+	public String toString() {
+		return "BankStatementDetails [id=" + id + ", dateoftransaction=" + dateoftransaction + ", timeoftransaction="
+				+ timeoftransaction + ", transactionamount=" + transactionamount + ", balanceamount=" + balanceamount
+				+ ", accountnumber=" + accountnumber + "]";
+	}
+	
+	
+}
+
+
+
+package com.bank.service;
+
+import com.bank.model.BankCustomerDetails;
+
+public interface BankService {
+	void toSleep(String name);
+	void userRegistration();
+	void userLogin();
+	void userFunctionalities();
+	void debit();
+	void credit();
+	void checkStatement();
+	void checkBalance();
+}
+
+
+
+
+package com.bank.service;
+
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
+import com.bank.DAO.BankDAO;
+import com.bank.DAO.BankDAOImpl;
+import com.bank.DAO.BankStatementDAOImpl;
+import com.bank.model.BankCustomerDetails;
+import com.bank.model.BankStatementDetails;
+import com.bank.DAO.BankStatementDAO;
+
+public class BankServiceImpl implements BankService{
+	Scanner sc=new Scanner(System.in);
+	Random random=new Random();
+	BankCustomerDetails loginpersonaldetails=new BankCustomerDetails();
+	//BankStatementDetails bankstatementdetails=new BankStatementDetails();
+	BankStatementDAO bankstatementDAO=new BankStatementDAOImpl();
+	@Override
+	public void toSleep(String name) {
+		for(int i=0;i<name.length();i++) {
+			System.out.print(name.charAt(i));
+			try {
+
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}	
+	}
+	BankDAOImpl bd=new BankDAOImpl();
+	//BankCustomerDetails loginpersonaldetails=new BankCustomerDetails();
+	@Override
+	public void userRegistration() {
+		BankCustomerDetails bankcustomerdetails=new BankCustomerDetails();
+		//BankDAOImpl bd=new BankDAOImpl();
+		List<BankCustomerDetails> allbankcustomerdetails=bd.getAllBankCustomerDetails();
+		
+		Scanner sc=new Scanner(System.in);
+		System.out.println("Enter your First Name");
+		String firstname=sc.next();
+		bankcustomerdetails.setFirstname(firstname);
+		System.out.println("Enter your Last Name");
+		String lastname=sc.next();
+		bankcustomerdetails.setLastname(lastname);
+		System.out.println("Enter your Email Id");
+		String emailid;
+		while(true) {
+			emailid=sc.next();
+		if(validateEmailId(emailid)) {
+			boolean checkemail=true;
+			for (BankCustomerDetails bankCustomerDetails : allbankcustomerdetails) {
+				if(bankCustomerDetails.getEmailid().equals(emailid)) {
+					checkemail=false;
+					break;
+				}
+				
+			}
+			if(checkemail) {
+				break;
+			}
+			else {
+				System.out.println("email is already in use");
+			}
+		}else {
+			System.out.println("enter valid email id");
+		}
+		}
+		bankcustomerdetails.setEmailid(emailid);
+		System.out.println("Enter your Password");
+		String password;
+		while(true) {
+		   password=sc.next();
+			if(validatePassword(password)) {
+				 boolean checkpassword=true;
+				for (BankCustomerDetails bcd : allbankcustomerdetails) {
+					if(bcd.getPassword().equalsIgnoreCase(password)) {
+						checkpassword=false;
+					}
+				}
+			if(checkpassword) {
+				break;
+			}
+			else {
+				System.out.println("password is already in use");
+			}
+		}
+			else {
+			System.out.println("Password should contain 4 characters");
+		}
+		}
+	
+		System.out.println("Enter your confirm password");
+		while(true) {
+		String cpassword=sc.next();
+		if(validateConfirmPassword(cpassword, password)){
+			
+			break;
+		}else {
+			System.out.println("Enter the valid password");
+	
+		}
+		}
+		bankcustomerdetails.setPassword(password);		
+		System.out.println("Enter your mobilenumber");
+		long mobilenumber;
+		while(true) {
+			mobilenumber=sc.nextLong();
+		if(validateMobileNumber(mobilenumber)) {
+			boolean checkmobnumber=true;
+			for (BankCustomerDetails bankCustomerDetails : allbankcustomerdetails) {
+				if(bankCustomerDetails.getMobilenumber()==mobilenumber) {
+					checkmobnumber=false;
+				}
+				}
+			if(checkmobnumber) {
+				break;
+			}
+			else {
+				System.out.println("mobile number is already in use");
+			}
+		}
+		else {
+			System.out.println("enter 10 digit mobile number and number starts with 9 or 8 or 7 or 6");
+		}
+		}
+		bankcustomerdetails.setMobilenumber(mobilenumber);
+		System.out.println("Enter your Aadhar Number");
+		long adharnumber;
+		while(true) {
+			adharnumber=sc.nextLong();
+			if(validateAdharNumber(adharnumber)) {
+				boolean checkaadharnumber=true;
+				for (BankCustomerDetails bankCustomerDetails : allbankcustomerdetails) {
+					if(bankCustomerDetails.getAadharnumber()==adharnumber) {
+						checkaadharnumber=false;
+					}
+					}
+				if(checkaadharnumber) {
+					break;
+				}
+				else {
+					System.out.println("aadhar number is already in use.Please enter different adhar number");
+				}
+			}
+			else {
+				System.out.println("enter 12 digit aadhar number");
+			}
+		}
+			bankcustomerdetails.setAadharnumber(adharnumber);
+
+		System.out.println("Enter your Gender (male/female/others)");
+		String gender=sc.next();
+		while(true) {
+			if(validateGender(gender)) {
+				break;
+			}
+			else {
+				System.out.println("enter the valid gender");
+			}
+		}
+			bankcustomerdetails.setGender(gender);	
+
+		System.out.println("Enter your Address");
+		String address=sc.next();
+		bankcustomerdetails.setAddress(address);
+		
+		
+		System.out.println("Enter your date of birth (yyyy-mm-dd)");
+		String dateofbirth=sc.next();
+		bankcustomerdetails.setDateofbirth(LocalDate.parse(dateofbirth));
+		System.out.println("AccountNumber");
+		Random random=new Random();
+		int accountnumber=random.nextInt(10000000);
+		if(accountnumber<1000000) {
+			accountnumber+=1000000;
+		}		
+	//System.out.println("AccountNumber"+accountnumber);
+	bankcustomerdetails.setAccountnumber(accountnumber);
+	
+	System.out.println("Enter amount");
+	double amount=sc.nextDouble();
+	bankcustomerdetails.setAmount(amount);
+	
+	int r=bd.insertBankCustomerDetails(bankcustomerdetails);
+	if(r!=0) {
+		if(gender.equals("male")) {
+			System.out.println("😍😍 Hello Mr:"+firstname+lastname);
+			System.out.println("your account successfully opened in teca 62 bank");
+			System.out.println("Your account number is: "+accountnumber);
+		}
+		else if(gender.equals("female")){
+			System.out.println("😍😍 Hello Miss:"+firstname+lastname);
+			System.out.println("your account successfully opened in teca 62 bank");
+			System.out.println("Your account number is: "+accountnumber);
+			
+		}
+		else {
+			System.out.println("😍😍 Hello Dear:"+firstname+lastname);
+			System.out.println("your account successfully opened in teca 62 bank");
+			System.out.println("Your account number is: "+accountnumber);
+			
+			
+		}
+		System.out.println("Registration successfull");
+		
+	}
+	else {
+		System.out.println("Server error 500");
+	}
+	}
+	public static boolean validateEmailId(String emailid) {
+		int countDigit=0;
+		for(int i=0;i<=emailid.length()-1;i++) {
+			char ch=emailid.charAt(i);
+			if(Character.isDigit(ch)) {
+				countDigit++;
+			}
+		}
+		if(countDigit>=1 && emailid.contains("@gmail.com") && (emailid.charAt(0)>='a' && emailid.charAt(0)<='z')) { 
+			return true;
+			
+		}
+		return false;
+	}
+	
+	
+	public static boolean validatePassword(String password) {
+		if(password.length()==4) {
+			return true;																																																
+				
+	}
+		return false;
+	}
+	
+	
+	
+	public static boolean validateConfirmPassword(String cpassword,String password) {
+		if(password.equals(cpassword)) {
+			return true;
+		}
+		return false;
+		
+	}
+	
+	public static boolean validateMobileNumber(long mobilenumber) {
+		int count=0;
+		long temp=mobilenumber;
+		while(mobilenumber!=0) {
+			count++;
+			mobilenumber=mobilenumber/10;
+		}
+		while(temp>=10) {
+			temp=temp/10;
+		}
+		if(count==10 && (temp==9 || temp==8 || temp==7 || temp==6) ) {
+			return true;
+		}
+		return false;
+		
+	}
+	
+	
+	public static boolean validateGender(String gender) {
+		if(gender.equalsIgnoreCase("male") || gender.equalsIgnoreCase("female") || gender.equalsIgnoreCase("others")) {
+			return true;
+		}
+		return false;
+		
+	}
+	
+	
+	private boolean validateAdharNumber(long adharnumber) {
+		int count=0;
+		while(adharnumber!=0) {
+			count++;
+			adharnumber=adharnumber/10;
+		}
+		if(count==12) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void userLogin() {
+		System.out.println("Enter emailid Or Number");
+		String emailidOrMobilenumber=sc.next();
+		System.out.println("Enter the Password");
+		String password=sc.next();
+		loginpersonaldetails =bd.getuserdetailsemailidandpassword(emailidOrMobilenumber, password);
+		if(loginpersonaldetails != null) {
+			int otp=random.nextInt(9999);
+			if(otp>1000 && otp<9999) {
+				//otp+=1000;
+				System.out.println("your otp: "+otp);
+				System.out.println("enter otp to Login");
+				int confrimOtp=sc.nextInt();
+				if(otp==confrimOtp) {
+			        if(loginpersonaldetails.getGender().equalsIgnoreCase("male")){
+				System.out.println("Hello Mr "+loginpersonaldetails.getFirstname()+" "+loginpersonaldetails.getLastname());
+			}
+			else if(loginpersonaldetails.getGender().equalsIgnoreCase("female")){
+				System.out.println("Hello Ms "+loginpersonaldetails.getFirstname()+" "+loginpersonaldetails.getLastname());
+			}
+			else {
+				System.out.println("Hello dear "+loginpersonaldetails.getFirstname()+" "+loginpersonaldetails.getLastname());
+			}
+			        userFunctionalities();
+				}
+				else {
+					System.out.println("Invalid Otp");
+				}
+				}
+		}
+		else {
+			System.out.println("Invalid credentials");
+			
+		}
+	}
+	@Override
+	public void userFunctionalities() {
+		boolean status=true;
+		while(status) {
+		System.out.println("Enter\n1.For Credit\n2.For Debit\n3.To Check Balanace\n4.To Check Statements");
+		switch (sc.nextInt()) {
+		case 1:
+			System.out.println("Credit");
+			credit();
+			break;
+		case 2:
+			System.out.println("Debit");
+			debit();
+			break;
+		case 3:
+			System.out.println("Check Balance");
+			checkBalance();
+			break;
+		case 4:
+			System.out.println("Check Statement");
+			checkStatement();
+			break;
+		default:
+			System.out.println("Invalid option");
+			break;
+		}
+		System.out.println("Do you want continue..?\n yes \n no");
+		if(sc.next().equalsIgnoreCase("yes"))
+		{
+			
+		}
+		else
+		{
+			System.out.println("Thank you");
+			status=false;
+		}
+		}
+	}
+	@Override
+	public void debit() {
+		System.out.println("Enter Amount");
+		double userenteredamount=sc.nextDouble();
+		if(userenteredamount>=0)
+		{
+			double databaseamount=loginpersonaldetails.getAmount();
+			if(databaseamount>=userenteredamount)
+			{
+				System.out.println("Sufficient");
+				double sub=databaseamount-userenteredamount;
+				long accountnumber=loginpersonaldetails.getAccountnumber();
+				if(bd.updateAmountByUsingAccountNumber(sub, accountnumber)!=0)
+				{
+					loginpersonaldetails.setAmount(sub);
+					BankStatementDetails bankstatementdetails=new BankStatementDetails();
+					bankstatementdetails.setAccountnumber(accountnumber);
+					bankstatementdetails.setBalanceamount(sub);
+					bankstatementdetails.setTransactionamount(userenteredamount);
+					int insertbankstatement=bankstatementDAO.insertBankStatement(bankstatementdetails);
+					if(insertbankstatement!=0)
+					{
+					System.out.println("Debited Successfully");	
+					System.out.println("Do you want to check balance amount(yes/no)...");
+					if(sc.next().equalsIgnoreCase("yes"))
+					{
+						System.out.println("Your Balance amount is"+sub);
+					}
+					}
+				}
+				else
+				{
+					System.out.println("server error 500");
+				}
+			}
+			else
+			{
+				System.out.println("In-Sufficient");
+			}
+		}
+		else
+		{
+			System.out.println("Invalid amount");
+		}
+	}
+	@Override
+	public void credit() {
+		// TODO Auto-generated method stub
+		System.out.println("Enter amount");
+		double creditedamount=sc.nextDouble();
+		double databaseamount=loginpersonaldetails.getAmount();
+		if(creditedamount<100000)
+		{
+			System.out.println("Credited Successfully");
+		    double add=creditedamount+databaseamount;
+		    long accountnumber=loginpersonaldetails.getAccountnumber();
+		    if(bd.updateAmountByUsingAccountNumber(add, accountnumber)!=0)
+		    {
+		    	loginpersonaldetails.setAmount(add);
+		    	BankStatementDetails bankstatementdetails=new BankStatementDetails();
+		    	 bankstatementdetails.setAccountnumber(accountnumber);
+		    	 bankstatementdetails.setTransactionamount(creditedamount);
+		    	 bankstatementdetails.setBalanceamount(add);
+		    	int insertbank=bankstatementDAO.insertBankStatement(bankstatementdetails);
+		    	if(insertbank!=0)
+		    	{
+		    		System.out.println("Do you want to check balance amount(yes/no)...");
+					if(sc.next().equalsIgnoreCase("yes"))
+					{
+						System.out.println("Your Balance amount is"+add);
+					}
+		    	}
+		    }
+		    else
+		    {
+		    	System.out.println("server error 200");
+		    }
+		}
+		else
+		{
+			System.out.println("Invalid amount");
+		}
+		
+	}
+	@Override
+	public void checkStatement() {
+		long accountnumber=loginpersonaldetails.getAccountnumber();
+		double amount=loginpersonaldetails.getAmount();
+		//BankStatementDetails bankstatementdetails=new BankStatementDetails();
+		//BankStatementDetails insertbank=bankstatementDAO.bankstatement(accountnumber);
+		List<BankStatementDetails> bank=bankstatementDAO.bankstatement(accountnumber);
+		
+		if(bank.size()!=0)
+		{
+			for(BankStatementDetails insertbank:bank)
+			{
+			System.out.println("Account number:"+accountnumber);
+			System.out.println(insertbank.getTransactionamount());
+			System.out.println(insertbank.getBalanceamount());
+			System.out.println(insertbank.getDateoftransaction());
+			System.out.println(insertbank.getTimeoftransaction());
+			}
+		}
+	}
+	@Override
+	public void checkBalance() {
+		long accountnumber=loginpersonaldetails.getAccountnumber();
+		String firstname=loginpersonaldetails.getFirstname();
+		double amount=loginpersonaldetails.getAmount();
+		if(bd.updateAmountByUsingAccountNumber(amount,accountnumber)!=0)
+		{
+			System.out.println("Hello dear "+firstname+" your balance is"+amount);
+		}
+		else {
+			System.out.println("Invalid Account Number");
+		}
+	}
+}
+
+
+
+package com.bank.service;
+
+public class CustomerRelationAssociater {
+	
+	public  static BankService customerService() {
+		return new BankServiceImpl();
+	}
+
+}
