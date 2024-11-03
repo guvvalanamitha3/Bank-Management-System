@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <title>Insert title here</title>
 <style>
-table
+button
 {
 border-radius:20px;
 font-size:20px;
