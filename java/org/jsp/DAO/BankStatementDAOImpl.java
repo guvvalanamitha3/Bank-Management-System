@@ -75,10 +75,11 @@ public class BankStatementDAOImpl implements BankStatementDAO{
 					bankstatementdetails.setTransactiondate(result.getDate("Transaction_Date").toLocalDate());
 					bankstatementdetails.setTransactiontime(result.getTime("Transaction_Time").toLocalTime());
 					bankstatementdetails.setAccountnumber(result.getInt("Account_Number"));
+					list.add(bankstatementdetails);
 					
 				}
-				return list;
 			}
+			return list;
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
