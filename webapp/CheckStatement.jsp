@@ -13,8 +13,8 @@
 </head>
 <body>
 <center>
-<%BankUserDetails bankuserdetails=(BankUserDetails)session.getAttribute("userdetails"); 
-int accountnumber=(Integer)session.getAttribute("accountnumber");
+<%
+
 %>
 <div>
 <form>
@@ -25,14 +25,24 @@ int accountnumber=(Integer)session.getAttribute("accountnumber");
 </div>
 <%
 String uaccountnumber=request.getParameter("accountnumber");
-if(bankuserdetails.getAccountnumber()!=0)
+if(uaccountnumber!=null)
 {
 	int useraccountnumber=Integer.parseInt(uaccountnumber);
-	BankStatementDAO bankstatementDAO=new BankStatementDAOImpl();
-	List<BankStatementDetails> list=bankstatementDAO.listAllStatementDetails();
+if(useraccountnumber!=0)
+{%>
+<table border="1">
+<tr>
+<th>Transaction Type</th>
+<th>Transaction Amount</th>
+<th>Transaction Date</th>
+<th>Transaction Time</th>
+<th>Account Number</th>
+</tr>
+<% BankStatementDAO bankstatementDAO=new BankStatementDAOImpl();
+	List<BankStatementDetails> list=bankstatementDAO.listAllStatementDetails(useraccountnumber);
 	for(BankStatementDetails bankstatementdetails:list)
 	{
-	if(bankstatementdetails.getAccountnumber()==useraccountnumber)
+	if(bankstatementdetails!=null && bankstatementdetails.getAccountnumber()==useraccountnumber)
 	{%>
 	<tr>
 	<td><%=bankstatementdetails.getTransactiontype() %></td>
@@ -40,13 +50,14 @@ if(bankuserdetails.getAccountnumber()!=0)
 	<td><%=bankstatementdetails.getTransactiondate() %></td>
 	<td><%=bankstatementdetails.getTransactiontime() %></td>
 	<td><%=bankstatementdetails.getAccountnumber() %></td>
-	<td><%=bankstatementdetails.getBalanceamount() %></td>
 	</tr>
 	<% 
 	}
 	}
 }
+}
 %>
+</table>
 </center>
 </body>
 </html>
